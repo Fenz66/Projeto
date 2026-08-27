@@ -1,5 +1,5 @@
 pandas
 kagglehub
 requests
-os
-json
+\\\os
+\\json

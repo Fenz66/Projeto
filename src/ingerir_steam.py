@@ -5,8 +5,8 @@ import shutil
 import json
 from datetime import datetime
 
-DATASET = "nicolasgonzalezmunoz/world-bank-world-development-indicators"
-BRONZE = Path("dados/bronze/banco_mundial")
+DATASET = "hubertsidorowicz/steam-games-dataset-daily-updates"
+BRONZE = Path("dados/bronze/steam")
 
 def baixar():
     pasta = kagglehub.dataset_download(DATASET)
@@ -23,7 +23,7 @@ def localizar(pasta):
 def copiar(origem):
     BRONZE.mkdir(parents=True, exist_ok=True)
     hoje = date.today().strftime("%Y%m%d")
-    destino = BRONZE / f"world_bank_development_indicators_{hoje}.csv"
+    destino = BRONZE / f"steam_games_{hoje}.csv"
     shutil.copy(origem, destino)
     return destino
 

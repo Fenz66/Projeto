@@ -2,7 +2,7 @@
 
 **Autor:** Caio Freitas Santos (Matrícula: 2025014153)
 
-**Pergunta norteadora:** Como o preço base (em USD) dos jogos da Steam afeta a acessibilidade de compra em diferentes países, quando cruzado com os seus respetivos indicadores socioeconómicos (como PIB per capita e Paridade do Poder de Compra)?[cite: 7]
+**Pergunta norteadora:** Como o preço base (em USD) dos jogos da Steam afeta a acessibilidade de compra em diferentes países, quando cruzado com os seus respetivos indicadores socioeconómicos (como PIB per capita e Paridade do Poder de Compra)?
 
 ## Fontes de dados
 

@@ -8,9 +8,6 @@ PADRAO_STEAM = "steam_games_*.csv"
 BRONZE_MUNDIAL = Path("dados/bronze/banco_mundial")
 PADRAO_MUNDIAL = "world_bank_development_indicators*.csv" 
 
-BRONZE_INDICADOR = Path("dados/bronze/banco_mundial/indicador_paises")
-PADRAO_INDICADOR = "*.csv" 
-
 RELATORIOS = Path("relatorios")
 
 def mais_recente(path, padrao):
@@ -35,13 +32,6 @@ def main():
     caminho_mundial = mais_recente(BRONZE_MUNDIAL, PADRAO_MUNDIAL)
     print("Perfilando:", caminho_mundial.name)
     print("Salvo em:", gerar(caminho_mundial))
-
-    try:
-        caminho_indicador = mais_recente(BRONZE_INDICADOR, PADRAO_INDICADOR)
-        print("Perfilando:", caminho_indicador.name)
-        print("Salvo em:", gerar(caminho_indicador))
-    except FileNotFoundError:
-        print(f"Nenhum arquivo encontrado em {BRONZE_INDICADOR}")
 
 if __name__ == "__main__":
     main()

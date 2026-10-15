@@ -2,7 +2,7 @@
 
 **Autor:** Caio Freitas Santos (Matrícula: 2025014153)
 
-**Pergunta norteadora:** Como o preço base (em USD) dos jogos da Steam afeta a acessibilidade de compra em diferentes países, quando cruzado com os seus respetivos indicadores socioeconómicos (como PIB per capita e Paridade do Poder de Compra)?[cite: 7]
+**Pergunta norteadora:** Como o preço base (em USD) dos jogos da Steam afeta a acessibilidade de compra em diferentes países, quando cruzado com os seus respectivos indicadores socioeconômicos (como PIB per capita e Paridade do Poder de Compra)?
 
 ## Fontes de dados
 
@@ -14,7 +14,7 @@
 ## Defeitos conhecidos das fontes
 
 ### Steam Store (Kaggle)
-- Registo de preços com valores ausentes ou texto inválido.
+- Registro de preços com valores ausentes ou texto inválido.
 - Presença de valores extremos (outliers) bastante altos que podem distorcer a média.
 - Possibilidade de chaves duplicadas para o mesmo jogo (AppID).
 
@@ -27,17 +27,18 @@
 ## Decisões de tratamento
 
 ### Steam Store
-- Filtro de colunas: mantidas apenas as colunas relevantes ao Índice de Acessibilidade (app_id, name, price).
+- Filtro de colunas: mantidas apenas as colunas relevantes ao Índice de Acessibilidade (`app_id`, `name`, `price`).
 - Valores de preço vazios/inválidos: removidas 1270 ocorrências. Motivo: sem preço, o cruzamento perde utilidade.
 - Valores extremos de preço: marcados 6690 outliers através do método IQR, mantendo a linha e sinalizando com uma nova coluna. Motivo: um jogo caro é um extremo legítimo e documentado, não um erro comprovado a ser eliminado.
 - Chaves duplicadas: eliminadas 0 ocorrências pela chave primária AppID.
 
 ### Banco Mundial
+- Filtro de colunas: mantidas apenas as colunas econômicas relevantes (`country`, `date`, `GDP_current_US`, `population`, `inflation_annual%`).
 - Espaços removidos de nomes de colunas e texto.
 - Falta de dados financeiros (PIB e População): 148 linhas retiradas. Motivo: impossibilita a criação do índice financeiro.
-- Padronização de nomes: países convertidos para letras minúsculas, sem acentos, e corrigidos através de um mapa de sinónimos para facilitar o cruzamento com a base da Steam.
+- Padronização de nomes: países convertidos para letras minúsculas, sem acentos, e corrigidos através de um mapa de sinônimos para facilitar o cruzamento com a base da Steam.
 - Duplicados de tempo e espaço: removidas 16998 linhas através da verificação da chave composta (país + ano).
-- Coluna `date`: convertida para número inteiro.
+- Coluna `date`: convertida para número inteiro (`Int64`).
 
 ## Atributos derivados
 
@@ -45,4 +46,4 @@
 Variação percentual anual do PIB em relação ao ano anterior, calculada por país. Serve para comparar o ritmo de crescimento financeiro entre diferentes nações. Ausente no primeiro ano de cada país, por definição.
 
 ### population_faixa
-Agrupamento em quartis de população (muito pequeno, pequeno, grande, muito grande). Serve para agrupar países com portes comparáveis sem ter de escolher um corte arbitrário de forma manual. 
+Agrupamento em quartis de população (muito pequeno, pequeno, grande, muito grande). Serve para agrupar países com portes comparáveis sem ter de escolher um corte arbitrário de forma manual.

@@ -9,12 +9,11 @@ MAPA_PAISES = {
     "united states of america": "usa",
     "united states": "usa",
     "uk": "united kingdom"
-    # Adicione aqui outros países que a Steam e o Banco Mundial escrevam diferente!
 }
 
 BRONZE = Path("dados/bronze/banco_mundial")
+PADRAO = "world_bank_development_indicators_*.csv"
 PRATA = Path("dados/prata")
-PADRAO = "world_bank_development_indicators*.csv"
 
 def carregar():
     arquivos = sorted(BRONZE.glob(PADRAO))
@@ -24,13 +23,12 @@ def carregar():
     
     colunas_uteis = [
         "country", 
-        "date", 
+        "date",  
         "GDP_current_US", 
-        "population", 
+        "population",
         "inflation_annual%"
     ]
     df = pd.read_csv(caminho, usecols=colunas_uteis, low_memory=False)
-    
     print("lido:", caminho.name, df.shape)
     return df, caminho
 
@@ -51,6 +49,16 @@ def tratar_vazios(df):
     removidos = antes - len(df)
     print(f"Linhas removidas por falta de PIB/População: {removidos}")
     return df.copy()
+
+def variacao_anual(df, chave, tempo, valor):
+    df = df.sort_values([chave, tempo])
+    df["variacao_pct_PIB"] = (df.groupby(chave)[valor].pct_change() * 100)
+    return df
+
+def faixa_por_quartil(df, coluna, rotulos):
+    nova_coluna = coluna + "_faixa"
+    df[nova_coluna] = pd.qcut(df[coluna], q=4, labels=rotulos, duplicates="drop")
+    return df
 
 def salvar(df):
     PRATA.mkdir(parents=True, exist_ok=True)
@@ -77,9 +85,7 @@ def main():
     antes = len(df)
     
     df = converter_tipos(df)
-    
     df = limpeza.tirar_espacos(df)
-    
     if "country" in df.columns:
         df["country"] = limpeza.chave_texto(df["country"])
         df["country"] = limpeza.aplicar_mapa(df["country"], MAPA_PAISES)
@@ -87,14 +93,23 @@ def main():
     df = conferir_chave(df, chaves=["country", "date"])
     df = tratar_vazios(df)
     
+    df = faixa_por_quartil(
+        df, 
+        "population",
+        ["muito pequeno", "pequeno", "grande", "muito grande"]
+    )
+    df = variacao_anual(df, chave="country", tempo="date", valor="GDP_current_US")
+    
     destino = salvar(df)
     registrar(origem, destino, antes, len(df), [
         "Filtro aplicado para manter apenas colunas econômicas (PIB, População, Inflação)",
         "Coluna 'date' convertida para numérico inteiro (Int64)",
         "Espaços removidos das strings",
-        "Nomes dos países padronizados (minúsculas, sem acento) e mapeados via dicionário explícito",
+        "Nomes dos países padronizados (minúsculas, sem acento) e mapeados via dicionário",
         "Duplicatas verificadas pela chave composta país + ano",
-        "Anos/Países sem dados de PIB ou População foram removidos"
+        "Anos/Países sem dados de PIB ou População foram removidos",
+        "Atributo derivado criado: Faixa de população por quartil (population_faixa)",
+        "Atributo derivado criado: Variação percentual anual do PIB (variacao_pct_PIB)"
     ])
     print("Transformação do Banco Mundial concluída!")
 

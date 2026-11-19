@@ -1,37 +1,42 @@
-from pathlib import Path
+import logging
+
 import pandas as pd
 from data_profiling import ProfileReport
 
-BRONZE_STEAM = Path("dados/bronze/steam")
-PADRAO_STEAM = "steam_games_*.csv" 
+import config
 
-BRONZE_MUNDIAL = Path("dados/bronze/banco_mundial")
-PADRAO_MUNDIAL = "world_bank_development_indicators*.csv" 
-
-RELATORIOS = Path("relatorios")
 
 def mais_recente(path, padrao):
     arquivos = sorted(path.glob(padrao))
     if not arquivos:
-        raise FileNotFoundError(f"A pasta {path} está vazia ou o arquivo não foi encontrado.")
+        raise FileNotFoundError(
+            f"A pasta {path} está vazia ou nenhum arquivo corresponde a {padrao}."
+        )
     return arquivos[-1]
+
 
 def gerar(caminho):
     df = pd.read_csv(caminho, low_memory=False)
     perfil = ProfileReport(df, title=caminho.name)
-    RELATORIOS.mkdir(exist_ok=True)
-    saida = RELATORIOS / f"{caminho.stem}.html"
+    config.RELATORIOS.mkdir(parents=True, exist_ok=True)
+    saida = config.RELATORIOS / f"{caminho.stem}.html"
     perfil.to_file(saida)
     return saida
 
-def main():
-    caminho_steam = mais_recente(BRONZE_STEAM, PADRAO_STEAM)
-    print("Perfilando:", caminho_steam.name)
-    print("Salvo em:", gerar(caminho_steam))
 
-    caminho_mundial = mais_recente(BRONZE_MUNDIAL, PADRAO_MUNDIAL)
-    print("Perfilando:", caminho_mundial.name)
-    print("Salvo em:", gerar(caminho_mundial))
+def main():
+    caminho_steam = mais_recente(config.BRONZE_STEAM, config.PADRAO_STEAM)
+    logging.info("Perfilando: %s", caminho_steam.name)
+    saida_steam = gerar(caminho_steam)
+    logging.info("Relatório salvo em: %s", saida_steam)
+
+    caminho_mundial = mais_recente(
+        config.BRONZE_BANCO_MUNDIAL, config.PADRAO_BANCO_MUNDIAL
+    )
+    logging.info("Perfilando: %s", caminho_mundial.name)
+    saida_mundial = gerar(caminho_mundial)
+    logging.info("Relatório salvo em: %s", saida_mundial)
+
 
 if __name__ == "__main__":
     main()

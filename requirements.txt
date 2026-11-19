@@ -1,8 +1,7 @@
 pandas
 kagglehub
-requests
 fg-data-profiling
 setuptools<82
 pyarrow
-# os
-# json
+duckdb
+dbt-duckdb

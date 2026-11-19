@@ -1,12 +1,22 @@
-# Dados: ficam apenas na sua maquina, nunca no GitHub.
-# O codigo do projeto reconstroi estes arquivos.
-dados/prata/*
-dados/ouro/*
-dados/bronze/*
-relatorios
+# Dados descartáveis ou pesados: ficam apenas na máquina local.
+# O código do projeto reconstrói estes arquivos.
+dados/bronze/**/*.csv
+dados/prata/*.parquet
+dados/ouro/*.duckdb
+dados/ouro/*.duckdb.wal
+*.wal
+relatorios/
 
-# Excecao: mantem as pastas visiveis no GitHub, mesmo vazias.
+# Exceções obrigatórias: mantém pastas e histórico acumulativo de proveniência (FAIR)
 !dados/**/.gitkeep
+!dados/**/proveniencia.jsonl
+
+# Logs e artefatos de execução
+pipeline.log
+logs/
+ecox14/target/
+ecox14/logs/
+ecox14/dbt_packages/
 
 # Arquivos gerados pelo Python
 __pycache__/
@@ -16,7 +26,7 @@ __pycache__/
 .venv/
 venv/
 
-# Configuracoes do editor
+# Configurações do editor
 .vscode/
 .idea/
 

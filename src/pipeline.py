@@ -1,108 +1,90 @@
 import logging
-import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
 
-import config
-import carga
-import ingerir_paises
-import ingerir_steam
-import transformar_paises
-import transformar_steam
+from config import RAIZ, configurar_log
+
+log = logging.getLogger(__name__)
 
 
-def _encontrar_dbt():
-    candidato = Path(sys.executable).parent / (
-        "dbt.exe" if sys.platform == "win32" else "dbt"
-    )
-    if candidato.exists():
-        return str(candidato)
-    no_path = shutil.which("dbt")
-    if no_path:
-        return no_path
-    raise FileNotFoundError("Executável 'dbt' não encontrado no ambiente virtual nem no PATH.")
+def _dbt():
+    candidato = Path(sys.executable).parent / ("dbt.exe" if sys.platform == "win32" else "dbt")
+    return str(candidato) if candidato.exists() else "dbt"
 
 
-def etapa_ingerir_steam():
+def etapa_ingestao():
+    import ingerir_paises
+    import ingerir_steam
+
     ingerir_steam.main()
-
-
-def etapa_ingerir_paises():
     ingerir_paises.main()
 
 
-def etapa_transformar_steam():
+def etapa_transformacao():
+    import transformar_paises
+    import transformar_steam
+
     transformar_steam.main()
-
-
-def etapa_transformar_paises():
     transformar_paises.main()
 
 
 def etapa_carga():
-    carga.carregar_prata(config.BANCO_DUCKDB)
+    import carga
+
+    carga.main()
 
 
 def etapa_modelagem():
-    dbt_bin = _encontrar_dbt()
-    logging.info("Executando dbt run (%s) em %s", dbt_bin, config.DBT_DIR)
-    subprocess.run(
-        [dbt_bin, "run"],
-        cwd=config.DBT_DIR,
-        check=True,
-    )
+    subprocess.run([_dbt(), "run"], cwd=RAIZ / "ecox14", check=True)
 
 
-def etapa_auditoria():
-    carga.conferir(config.BANCO_DUCKDB)
+def etapa_testes():
+    subprocess.run([_dbt(), "test"], cwd=RAIZ / "ecox14", check=True)
 
 
 ETAPAS = [
-    ("ingerir_steam", etapa_ingerir_steam),
-    ("ingerir_paises", etapa_ingerir_paises),
-    ("transformar_steam", etapa_transformar_steam),
-    ("transformar_paises", etapa_transformar_paises),
+    ("ingestao", etapa_ingestao),
+    ("transformacao", etapa_transformacao),
     ("carga", etapa_carga),
     ("modelagem", etapa_modelagem),
-    ("auditoria", etapa_auditoria),
+    ("testes", etapa_testes),
 ]
 
 
-def main():
-    nomes = [nome for nome, _ in ETAPAS]
-    inicio_idx = 0
+def executar(nome, funcao):
+    inicio = time.perf_counter()
+    log.info("etapa %s: inicio", nome)
+    try:
+        funcao()
+    except Exception:
+        log.exception("etapa %s falhou", nome)
+        raise
+    log.info("etapa %s: fim em %.1fs", nome, time.perf_counter() - inicio)
 
-    if len(sys.argv) > 1:
-        etapa_inicial = sys.argv[1].strip().lower()
-        if etapa_inicial not in nomes:
-            logging.error(
-                "Etapa inválida: '%s'. Etapas disponíveis: %s",
-                etapa_inicial,
-                ", ".join(nomes),
-            )
-            sys.exit(1)
-        inicio_idx = nomes.index(etapa_inicial)
-        logging.info("Retomando pipeline a partir da etapa: %s", etapa_inicial)
+
+def main(a_partir_de=None):
+    configurar_log()
+    nomes = [nome for nome, _ in ETAPAS]
+
+    if a_partir_de is not None and a_partir_de not in nomes:
+        log.error("etapa invalida: '%s'. Opcoes: %s", a_partir_de, ", ".join(nomes))
+        raise ValueError(f"Etapa invalida: {a_partir_de}")
 
     inicio_total = time.perf_counter()
-    logging.info("=== Iniciando pipeline completo (Medallion) ===")
+    comecou = a_partir_de is None
 
-    try:
-        for nome, funcao in ETAPAS[inicio_idx:]:
-            t0 = time.perf_counter()
-            logging.info("--- Etapa [%s] iniciada ---", nome)
-            funcao()
-            duracao = time.perf_counter() - t0
-            logging.info("--- Etapa [%s] concluída em %.2fs ---", nome, duracao)
-    except Exception:
-        logging.exception("Falha na execução do pipeline!")
-        sys.exit(1)
+    for nome, funcao in ETAPAS:
+        if nome == a_partir_de:
+            comecou = True
+        if not comecou or funcao is None:
+            log.info("etapa %s: pulada", nome)
+            continue
+        executar(nome, funcao)
 
-    total = time.perf_counter() - inicio_total
-    logging.info("=== Pipeline concluído com sucesso em %.2fs ===", total)
+    log.info("pipeline concluido em %.1fs", time.perf_counter() - inicio_total)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1] if len(sys.argv) > 1 else None)

@@ -3,6 +3,9 @@ version: 2
 sources:
   - name: prata
     schema: prata
+    description: Tabelas tratadas da camada Prata carregadas a partir dos arquivos Parquet.
     tables:
       - name: paises
+        description: Série histórica limpa (1960-2022) de indicadores econômicos por país do Banco Mundial (sem agregados regionais).
       - name: steam
+        description: Catálogo limpo de jogos da Steam com preço base em USD e sinalização de outliers via IQR.

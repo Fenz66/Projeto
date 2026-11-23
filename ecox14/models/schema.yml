@@ -1,0 +1,131 @@
+version: 2
+
+models:
+  - name: dim_pais
+    description: Dimensão de países com uma linha por país, contendo o ano mais recente com PIB e população válidos.
+    columns:
+      - name: pais_id
+        description: Chave padronizada do país (minúsculas, sem acentos e sinônimos unificados).
+        data_tests:
+          - not_null
+          - unique
+      - name: nome_pais
+        description: Nome legível do país preservado da fonte original para exibição.
+        data_tests:
+          - not_null
+      - name: ano_referencia
+        description: Ano mais recente com PIB e população válidos para o país.
+        data_tests:
+          - not_null
+      - name: pib
+        description: Produto Interno Bruto anual em dólares correntes (USD).
+        data_tests:
+          - not_null
+      - name: populacao
+        description: População total do país no ano de referência.
+        data_tests:
+          - not_null
+      - name: inflacao_anual
+        description: Taxa anual de inflação ao consumidor (%).
+      - name: faixa_populacional
+        description: Classificação do porte populacional em quartis anuais.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - muito pequeno
+                  - pequeno
+                  - grande
+                  - muito grande
+      - name: variacao_pib
+        description: Variação percentual anual do PIB em relação ao ano imediatamente anterior.
+
+  - name: dim_steam
+    description: Dimensão completa do catálogo de jogos da Steam (jogos pagos e gratuitos).
+    columns:
+      - name: jogo_id
+        description: Identificador único do jogo na Steam (AppID).
+        data_tests:
+          - not_null
+          - unique
+      - name: nome_jogo
+        description: Título do jogo na Steam.
+        data_tests:
+          - not_null
+      - name: preco_usd
+        description: Preço base do jogo em dólares americanos (USD).
+        data_tests:
+          - not_null
+      - name: flag_preco_extremo
+        description: Sinalização booleana de valor extremo de preço identificada pelo método IQR.
+        data_tests:
+          - not_null
+
+  - name: fato_acessibilidade
+    description: Tabela fato no grão (pais_id, ano, jogo_id) medindo a acessibilidade de jogos pagos da Steam frente ao PIB per capita mais recente de cada país.
+    columns:
+      - name: pais_id
+        description: Chave estrangeira para ouro.dim_pais.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_pais')
+                field: pais_id
+      - name: ano
+        description: Ano de referência dos indicadores econômicos do país.
+        data_tests:
+          - not_null
+      - name: jogo_id
+        description: Chave estrangeira para ouro.dim_steam (apenas jogos pagos, preco_usd > 0).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_steam')
+                field: jogo_id
+      - name: preco_usd
+        description: Preço base do jogo em USD.
+        data_tests:
+          - not_null
+      - name: pib
+        description: PIB anual do país em dólares correntes (USD).
+        data_tests:
+          - not_null
+      - name: populacao
+        description: População do país no ano de referência.
+        data_tests:
+          - not_null
+      - name: pib_per_capita
+        description: PIB per capita calculado como pib / populacao (USD/habitante).
+        data_tests:
+          - not_null
+      - name: indice_acessibilidade
+        description: Peso relativo do preço do jogo sobre o PIB per capita, escalado por 100.000. Quanto maior, menos acessível.
+        data_tests:
+          - not_null
+
+  - name: vw_acessibilidade_completa
+    description: View analítica pronta para consumo unindo fato_acessibilidade às dimensões dim_pais e dim_steam.
+    columns:
+      - name: pais_id
+        description: Chave padronizada do país.
+      - name: nome_pais
+        description: Nome legível do país.
+      - name: ano
+        description: Ano de referência econômico.
+      - name: jogo_id
+        description: Identificador do jogo (AppID).
+      - name: faixa_populacional
+        description: Porte populacional do país em quartis.
+      - name: nome_jogo
+        description: Título do jogo na Steam.
+      - name: preco_usd
+        description: Preço base do jogo em USD.
+      - name: flag_preco_extremo
+        description: Indica se o preço é extremo segundo IQR.
+      - name: pib_per_capita
+        description: PIB per capita anual do país (USD).
+      - name: indice_acessibilidade
+        description: Índice de acessibilidade ((preco_usd / pib_per_capita) * 100.000).

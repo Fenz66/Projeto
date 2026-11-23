@@ -18,6 +18,9 @@ ecox14/target/
 ecox14/logs/
 ecox14/dbt_packages/
 
+# Binários locais opcionais
+duckdb.exe
+
 # Arquivos gerados pelo Python
 __pycache__/
 *.pyc
@@ -33,3 +36,6 @@ venv/
 # Credenciais: nunca versione senhas ou chaves de acesso
 .env
 kaggle.json
+
+# Material de referência das aulas
+slides_aulas/
